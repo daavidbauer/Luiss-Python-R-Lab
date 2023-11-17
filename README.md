@@ -1,7 +1,7 @@
 # Luiss-Python-R-Lab
 This holds the code of the final project for my Python & R for Data science. 
 The goal of this project was to take a dataset containing information about video games (e.g., number of plays, genres etc.) to subject it to a OSEMN pipeline. 
-The focus was put on obtaining the data (O), scrubbing and cleasing the data (S) and performing an explorative data analysis (EDA) (E), so the first three steps of the pipeline. 
+The focus was put on obtaining the data (O), scrubbing and cleaning the data (S) and performing an explorative data analysis (EDA) (E), so the first three steps of the pipeline. 
 The modeling (M) and data interpretation (N) were also considered and out of curiosity performed to gain the experience of a full OSEMN pipeline. 
 # Cleaning
 After importing the data, descriptive statistics are preformed to get some overview on null values, column data types and general layout of the data frame.
