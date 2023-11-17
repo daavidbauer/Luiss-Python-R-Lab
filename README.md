@@ -11,7 +11,7 @@ Titles are cleaned and adjusted and more complicated columns with multiple categ
 Dates are split into different columns for year month and season to increase number of potential predictors for the later modeling phase.
 Out of curiosity a bag of words k means clustering is performed to get attempt the semantic categorization of otherwise to complicated columns containing entire texts (only in Python)
 # EDA
-Afterwords various graphs, plots, charts, Peasron correlation matrix and more to get some insight on the data.
+Afterwords various graphs, plots, charts, Pearson correlation matrix and more to get some insight on the data.
 # Modeling and Interpretation
 Large numeric variables are scaled to stabalize the performance of the later modeling.
 For the simple regression performed, categorical variables are split into dummies, the data split into training and test data, the model trained, and the prediction accuracy tested. 
