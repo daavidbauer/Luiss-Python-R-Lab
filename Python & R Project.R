@@ -153,10 +153,37 @@ corrplot(cor_matrix, method = "color", col =
 #constructing pair plots for seeing the relationship of the variables 
 pairs(numeric_vars)
 
-## Plot Games per month
-library(dplyr)
+#Kernel Density plots of the numeric variables for visualizing the frequency 
 library(ggplot2)
+library(tidyr)
+library(dplyr)
 
+numeric_vars <- numeric_vars %>%
+  gather(key = "variable", value = "value")
+
+ggplot(data = numeric_vars, aes(x = value)) +
+  geom_density() +
+  facet_wrap(~variable, scales = "free") +
+  labs(title = "Kernel Density Plot", x = "Value", y = "Density") +
+  theme_minimal()
+
+#plot ratings per season as violin plots
+games_clean %>%
+  ggplot(aes(x = Season, y = Rating, fill = Season)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "darkviolet", color = "orange") +
+  labs(title = "Ratings per Season", x = "Season", y = "Rating") +
+  theme_minimal()
+
+#plot ratings per month as violin plots
+games_clean %>%
+  ggplot(aes(x = Release.Month, y = Rating)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "darkviolet", color = "orange") +
+  labs(title = "Ratings per Month", x = "Month", y = "Rating") +
+  theme_minimal()
+
+## Plot Games per month
 games_clean %>%
   group_by(Release.Month) %>%
   summarise(Number_of_Games = n()) %>%
@@ -329,6 +356,50 @@ nintendo_games %>%
        y = "Mean Rating") +
   theme_minimal()+
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+#Text length analysis 
+
+games_words <- games
+mean_rating <- mean(games_words$Rating)
+
+# Review Length Distribution 
+# Data Frame games above & below mean
+
+above_mean <- games_words[which(games_words$Rating > mean_rating),]
+below_mean <- games_words[which(games_words$Rating < mean_rating),]
+
+above_mean_review_lengths = sapply(strsplit(above_mean$Reviews, split = " "), length)
+below_mean_review_lengths = sapply(strsplit(below_mean$Reviews, split = " "), length)
+
+review_lengths <- data.frame(lenghts = c(above_mean_review_lengths, below_mean_review_lengths),
+                              above_below_mean = rep(c("Above", "Below")))
+
+# Create a two-layered histogram
+ggplot(review_lengths, aes(x = lenghts, fill = above_below_mean)) +
+  geom_histogram(position = "identity", alpha = 0.7, bins = 30) +
+  labs(title = "Review Length Distribution Above vs. Below Mean Rating",
+       x = "Length",
+       y = "Frequency") +
+  scale_fill_manual(values = c("Above" = "burlywood1", "Below" = "coral3")) +
+  theme_minimal()
+
+# Summary Length Distribution 
+# Data Frame games above & below mean
+
+above_mean_summary_lengths = sapply(strsplit(above_mean$Summary, split = " "), length)
+below_mean_summary_lengths = sapply(strsplit(below_mean$Summary, split = " "), length)
+
+summary_lengths <- data.frame(lenghts = c(above_mean_summary_lengths, below_mean_summary_lengths),
+                              above_below_mean = rep(c("Above", "Below")))
+
+# Create a two-layered histogram
+ggplot(summary_lengths, aes(x = lenghts, fill = above_below_mean)) +
+  geom_histogram(position = "identity", alpha = 0.7, bins = 30) +
+  labs(title = "Summary Length Distribution Above vs. Below Mean Rating",
+       x = "Length",
+       y = "Frequency") +
+  scale_fill_manual(values = c("Above" = "burlywood1", "Below" = "coral3")) +
+  theme_minimal()
 
 ###################### MODEL BUILDING AND TESTING #######################
 
