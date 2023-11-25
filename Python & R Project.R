@@ -112,10 +112,10 @@ for (genre in games_clean$Genres){
   gsub(",","", .) %>%
   gsub("'","", .) %>%
   strsplit(" ")
-genre_lst <- c(genre_lst, genre[[1]][1])  
+genre_lst <- c(genre_lst, genre)  
 }
 
-games_clean["Genres"] <- genre_lst
+games_clean$Genres <- genre_lst
 
 games_clean <- na.omit(games_clean)
 
@@ -127,9 +127,9 @@ for (team in games_clean$Team){
     gsub("\\]", '', .) %>%
     gsub("'","", .) %>%
     strsplit(",")
-  team_lst <- c(team_lst, team[[1]][1])  
+  team_lst <- c(team_lst, team) 
 }
-games_clean["Team"] <- team_lst
+games_clean$Team <- team_lst
 
 View(games_clean)
 
@@ -156,7 +156,6 @@ pairs(numeric_vars)
 #Kernel Density plots of the numeric variables for visualizing the frequency 
 library(ggplot2)
 library(tidyr)
-library(dplyr)
 
 numeric_vars <- numeric_vars %>%
   gather(key = "variable", value = "value")
@@ -220,7 +219,7 @@ games_clean %>%
 
 ## Genres Total
 games_clean %>%
-  group_by(Genres) %>%
+  group_by(Genres = sapply(Genres, function(x) x[1])) %>%
   summarise(Number_of_Games = n()) %>%
   ggplot(aes(x = reorder(Genres, Number_of_Games), y = Number_of_Games, fill =Number_of_Games)) +
   geom_bar(stat = "identity") +
@@ -257,7 +256,7 @@ games_clean %>%
 
 #Team Total
 games_clean %>%
-  group_by(Team) %>%
+  group_by(Team = sapply(Team, function(x) x[1])) %>%
   summarise(Number_of_Games = n()) %>%
   top_n(10, Number_of_Games) %>%
   ggplot(aes(x = reorder(Team, Number_of_Games), y = Number_of_Games, fill =Number_of_Games)) +
