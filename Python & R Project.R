@@ -22,7 +22,6 @@ games <- games[!duplicated(games[["Title"]]), ]
 #Drop extra index column and summary and reviews since performing text 
 #analysis is outside the scope of this project
 games_clean <- games[,-(which(names(games) %in% c('Reviews','Summary', 'X')))]
-head(games_clean)
 
 #a function to turn e.g, "8.8k" into an integer of 8800
 k_to_int <- function(lst) {
@@ -102,7 +101,7 @@ games_clean$Release.Year <- years
 #drop the original release date column 
 games_clean <- games_clean[,-which(names(games_clean) == "Release.Date")]
 
-#Get only the first genre of each title so it can be used as a dummy later
+#Turn the genres in each row into list containing them as individual items
 library(dplyr)
 genre_lst = c()
 
@@ -119,7 +118,7 @@ games_clean$Genres <- genre_lst
 
 games_clean <- na.omit(games_clean)
 
-#split the teams string into individual items in a list for each game and get main (first)
+#split the teams string into individual items in a list for each game 
 team_lst = c()
 
 for (team in games_clean$Team){
@@ -127,10 +126,12 @@ for (team in games_clean$Team){
     gsub("\\]", '', .) %>%
     gsub("'","", .) %>%
     strsplit(",")
-  team_lst <- c(team_lst, team) 
+  team_lst <- c(team_lst, team)  
 }
+
 games_clean$Team <- team_lst
 
+#display the cleaned data set 
 View(games_clean)
 
 ###################### EXPLORATORY STATISTICS ######################
@@ -150,10 +151,10 @@ corrplot(cor_matrix, method = "color", col =
          addCoef.col = "black", 
          number.cex = 0.7)
 
-#constructing pair plots for seeing the relationship of the variables 
+#construct pair plots for seeing the relationship of the variables 
 pairs(numeric_vars)
 
-#Kernel Density plots of the numeric variables for visualizing the frequency 
+#Kernel Density plots of the numeric variables for visualizing their frequency 
 library(ggplot2)
 library(tidyr)
 
@@ -182,7 +183,7 @@ games_clean %>%
   labs(title = "Ratings per Month", x = "Month", y = "Rating") +
   theme_minimal()
 
-## Plot Games per month
+#plot Games per month
 games_clean %>%
   group_by(Release.Month) %>%
   summarise(Number_of_Games = n()) %>%
@@ -193,7 +194,7 @@ games_clean %>%
        x = "Months",
        y = "Number of Games")
 
-## Games per season
+#plot Games per season
 games_clean %>%
   group_by(Season) %>%
   summarise(Number_of_Games = n()) %>%
@@ -205,7 +206,7 @@ games_clean %>%
        y = "Number of Games")+
   theme_minimal() 
 
-## Games per year
+#plot games per year
 games_clean %>%
   group_by(Release.Year) %>%
   summarise(Number_of_Games = n()) %>%
@@ -217,7 +218,7 @@ games_clean %>%
        y = "Number of Games")+
   theme_minimal() 
 
-## Genres Total
+#plot total number of games per genre
 games_clean %>%
   group_by(Genres = sapply(Genres, function(x) x[1])) %>%
   summarise(Number_of_Games = n()) %>%
@@ -230,7 +231,7 @@ games_clean %>%
   theme_minimal() +
   coord_flip()
 
-# Mean Rating
+#plot mean rating over the years
 games_clean %>%
   group_by(Release.Year) %>%
   summarise(Mean_Rating = mean(Rating)) %>%
@@ -241,9 +242,9 @@ games_clean %>%
        y = "Release Year")+
   theme_minimal() 
 
-# Genre Rating
+#plot mean genre ratings
 games_clean %>%
-  group_by(Genres) %>%
+  group_by(Genres = sapply(Genres, function(x) x[1])) %>%
   summarise(Mean_Rating = mean(Rating)) %>%
   ggplot(aes(x = reorder(Genres, Mean_Rating), y = Mean_Rating, fill =Mean_Rating)) +
   geom_bar(stat = "identity") +
@@ -254,7 +255,7 @@ games_clean %>%
   theme_minimal() +
   coord_flip()
 
-#Team Total
+#T plot the numbers of games per team
 games_clean %>%
   group_by(Team = sapply(Team, function(x) x[1])) %>%
   summarise(Number_of_Games = n()) %>%
@@ -268,10 +269,20 @@ games_clean %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
+#get violin plots comparing nintendo and not nintendo games 
+games_clean_nintendo <- games_clean %>%
+  mutate(Nintendo = ifelse(grepl("Nintendo", games_clean$Team), "Nintendo", "Other"))
+
+ggplot(games_clean_nintendo, aes(x = Nintendo, y = Rating, Fill = Nintendo)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "darkviolet", color = "orange") +
+  labs(x = "Teams", y = "Rating") +
+  theme_minimal()
+
 #get all rows with video games where Nintendo was a producing team 
 nintendo_games<- games_clean[(which(grepl("Nintendo", games_clean$Team))),]
 
-#Nintendo game releases per month
+#plot nintendo game releases per month
 nintendo_games %>%
   group_by(Release.Month) %>%
   summarise(Number_of_Games = n()) %>%
@@ -283,7 +294,7 @@ nintendo_games %>%
        y = "Number of Games")+
   theme_minimal() 
   
-#Nintendo game releases per season
+#plot nintendo game releases per season
 nintendo_games %>%
   group_by(Season) %>%
   summarise(Number_of_Games = n()) %>%
@@ -295,9 +306,9 @@ nintendo_games %>%
        y = "Number of Games")+
   theme_minimal() 
 
-#Nintendo game releases per season
+#plot nintendo game releases per genre
 nintendo_games %>%
-  group_by(Genres) %>%
+  group_by(Genres = sapply(Genres, function(x) x[1])) %>%
   summarise(Number_of_Games = n()) %>%
   ggplot(aes(x = Genres, y = Number_of_Games, fill = Number_of_Games)) +
   geom_bar(stat = "identity") +
@@ -308,9 +319,9 @@ nintendo_games %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
-#Nintendo Genres Totals
+#plot nintendo genre total game numbers
 nintendo_games %>%
-  group_by(Genres) %>%
+  group_by(Genres = sapply(Genres, function(x) x[1])) %>%
   summarise(Number_of_Games = n()) %>%
   mutate(Percentage = (Number_of_Games / sum(Number_of_Games)) * 100) %>%
   ggplot(aes(x = "", y = Percentage, fill = Genres)) +
@@ -320,7 +331,7 @@ nintendo_games %>%
   scale_fill_brewer(palette = "Set3") +
   labs(title = "Nintendo Genres Totals", fill = "Genres")
 
-# Nintendo Per Year
+#plot nintendo games per year
 nintendo_games %>%
   group_by(Release.Year) %>%
   summarise(Number_of_Games = n()) %>%
@@ -332,7 +343,7 @@ nintendo_games %>%
        y = "Number of Games")+
   theme_minimal()
 
-# Nintendo Mean Rating per Year
+#plot nintendo games mean rating per year
 nintendo_games %>%
   group_by(Release.Year) %>%
   summarise(Mean_Rating = mean(Rating)) %>%
@@ -343,9 +354,9 @@ nintendo_games %>%
        y = "Release Year")+
   theme_minimal() 
 
-# Nintendo Mean Rating per Genre
+#plot nintendo mean rating per genre
 nintendo_games %>%
-  group_by(Genres) %>%
+  group_by(Genres = sapply(Genres, function(x) x[1])) %>%
   summarise(Mean_Rating = mean(Rating)) %>%
   ggplot(aes(x = reorder(Genres, Mean_Rating), y = Mean_Rating, fill =Mean_Rating)) +
   geom_bar(stat = "identity") +
@@ -356,13 +367,13 @@ nintendo_games %>%
   theme_minimal()+
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
-#Text length analysis 
+#text length analysis 
 
 games_words <- games
 mean_rating <- mean(games_words$Rating)
 
-# Review Length Distribution 
-# Data Frame games above & below mean
+##review length distribution 
+#data frame games above & below mean
 
 above_mean <- games_words[which(games_words$Rating > mean_rating),]
 below_mean <- games_words[which(games_words$Rating < mean_rating),]
@@ -373,7 +384,7 @@ below_mean_review_lengths = sapply(strsplit(below_mean$Reviews, split = " "), le
 review_lengths <- data.frame(lenghts = c(above_mean_review_lengths, below_mean_review_lengths),
                               above_below_mean = rep(c("Above", "Below")))
 
-# Create a two-layered histogram
+#create a two-layered histogram
 ggplot(review_lengths, aes(x = lenghts, fill = above_below_mean)) +
   geom_histogram(position = "identity", alpha = 0.7, bins = 30) +
   labs(title = "Review Length Distribution Above vs. Below Mean Rating",
@@ -382,8 +393,8 @@ ggplot(review_lengths, aes(x = lenghts, fill = above_below_mean)) +
   scale_fill_manual(values = c("Above" = "burlywood1", "Below" = "coral3")) +
   theme_minimal()
 
-# Summary Length Distribution 
-# Data Frame games above & below mean
+#summary Length Distribution 
+#data frame games above & below mean
 
 above_mean_summary_lengths = sapply(strsplit(above_mean$Summary, split = " "), length)
 below_mean_summary_lengths = sapply(strsplit(below_mean$Summary, split = " "), length)
@@ -391,7 +402,7 @@ below_mean_summary_lengths = sapply(strsplit(below_mean$Summary, split = " "), l
 summary_lengths <- data.frame(lenghts = c(above_mean_summary_lengths, below_mean_summary_lengths),
                               above_below_mean = rep(c("Above", "Below")))
 
-# Create a two-layered histogram
+#create a two-layered histogram
 ggplot(summary_lengths, aes(x = lenghts, fill = above_below_mean)) +
   geom_histogram(position = "identity", alpha = 0.7, bins = 30) +
   labs(title = "Summary Length Distribution Above vs. Below Mean Rating",
@@ -404,31 +415,35 @@ ggplot(summary_lengths, aes(x = lenghts, fill = above_below_mean)) +
 
 ##even thought the correlation in our data set is sub-optimal 
 #we tried building a linear regression model to experience the OSEMN Pipeline 
-#from beginning to the end
+#from the beginning to the end
 
 #create dummy variables for Genre, Release Month and Season
 games_fin <- cbind(games_clean[, -which(
-  names(games_clean) %in% c("Genres"))], 
-                     model.matrix(~ Genres - 1, data = games_clean))
-
-games_fin <- cbind(games_fin[, -which(
-  names(games_fin) %in% c("Release.Month"))], 
-  model.matrix(~ Release.Month - 1, data = games_fin))
+  names(games_clean) %in% c("Release.Month"))], 
+  model.matrix(~ Release.Month - 1, data = games_clean))
 
 games_fin <- cbind(games_fin[, -which(
   names(games_fin) %in% c("Season"))], 
   model.matrix(~ Season - 1, data = games_fin))
 
+games_fin$Genres <- sapply(games_fin$Genres, function(x) x[1])
+games_fin <- na.omit(games_fin)
+
+games_fin <- cbind(games_fin[, -which(
+  names(games_fin) %in% c("Genres"))], 
+  model.matrix(~ Genres - 1, data = games_fin))
+
 #drop Team and Title since they have too many unique values to be turned into a dummy 
 games_fin<- games_fin[,-(which(names(games_fin) %in% c("Team", "Title", "Times.Listed")))]
 
-# Perform min-max scaling
-min_max <- function(x) {(x - min(x)) / (max(x) - min(x))}
+#perform standard scaling (more robust with linear regression)
+games_fin_scaled <- as.data.frame(scale(games_fin[, c("Number.of.Reviews", "Plays","Playing", "Backlogs", "Wishlist",
+              "Release.Year")]))
 games_fin[, c("Number.of.Reviews", "Plays","Playing", "Backlogs", "Wishlist",
-              "Release.Year")] <- lapply(games_fin[, c( "Number.of.Reviews", "Plays","Playing", 
-                          "Backlogs", "Wishlist", "Release.Year")], min_max)
+              "Release.Year")] <- games_fin_scaled[, c("Number.of.Reviews", "Plays","Playing", "Backlogs", "Wishlist",
+                                                "Release.Year")]
 
-# split the final games data set into 70% training and 30% test data 
+#split the final games data set into 70% training and 30% test data 
 train <- games_fin[1:(1082*0.7), ]
 test <- games_fin[(1082*0.7):1082, ]
 
@@ -443,3 +458,5 @@ y_pred <- predict(lin_fit, newdata = test)
 
 #get a root mean squared error evaluation of the model
 print(RMSE <- sqrt(mean((test$Rating - y_pred)^2)))
+
+################################################################################
